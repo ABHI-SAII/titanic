@@ -1,0 +1,321 @@
+# importing  required libraries
+import pandas as pd
+from pandas import Series, DataFrame
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Render plots inline
+%matplotlib inline
+
+# import data from csv file
+titanic_df = pd.read_csv('train.csv')
+
+# Checking the number of rows(observations) and colmumns(variables)
+titanic_df.shape
+(891, 12)
+titanic_df.head(10) # Looking at first few rows of dataset
+# get overall info for the dataset 
+titanic_df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 12 columns):
+PassengerId    891 non-null int64
+Survived       891 non-null int64
+Pclass         891 non-null int64
+Name           891 non-null object
+Sex            891 non-null object
+Age            714 non-null float64
+SibSp          891 non-null int64
+Parch          891 non-null int64
+Ticket         891 non-null object
+Fare           891 non-null float64
+Cabin          204 non-null object
+Embarked       889 non-null object
+dtypes: float64(2), int64(5), object(5)
+memory usage: 83.6+ KB
+sns.factorplot('Sex', data=titanic_df, kind="count") ## Let's check gender
+<seaborn.axisgrid.FacetGrid at 0xc2905c0>
+# Now let's seperate the genders by classes, we can use the 'hue' arguement here!
+
+sns.factorplot('Sex', data=titanic_df, kind="count", hue='Pclass')
+<seaborn.axisgrid.FacetGrid at 0xd2b0b38>
+sns.factorplot('Pclass', data=titanic_df, kind="count", hue='Sex')
+<seaborn.axisgrid.FacetGrid at 0xc322898>
+# We'll treat anyone as under 16 as a child, and then use the apply technique with a function to create a new column
+
+# First let's make a function to sort through the sex 
+def male_female_child(passenger):
+    # Take the Age and Sex
+    age,sex = passenger
+    # Compare the age, otherwise leave the sex
+    if age < 16:
+        return 'child'
+    else:
+        return sex
+# Define a new column called 'person', remember to specify axis=1 for columns and not index
+
+titanic_df['Person']= titanic_df[['Age','Sex']].apply(male_female_child, axis=1)
+# Let's see if this worked, check out the first ten rows
+titanic_df[0:10]
+# Let's try the factorplot again!
+sns.factorplot('Pclass', data=titanic_df, kind="count", hue='Person')
+<seaborn.axisgrid.FacetGrid at 0xbe6ed68>
+# Quick way to create a histogram using pandas
+titanic_df['Age'].hist(bins=70)
+<matplotlib.axes._subplots.AxesSubplot at 0xcab31d0>
+titanic_df['Age'].mean() # Get the mean of Age
+29.69911764705882
+# We could also get a quick overall comparison of male,female,child
+
+titanic_df['Person'].value_counts()
+male      537
+female    271
+child      83
+Name: Person, dtype: int64
+# Another way to visualize the data is to use FacetGrid to plot multiple kedplots on one plot
+
+# Set the figure equal to a facetgrid with the pandas dataframe as its data source, set the hue, and change the aspect ratio.
+fig = sns.FacetGrid(titanic_df, hue="Sex",aspect=4)
+
+# Next use map to plot all the possible kdeplots for the 'Age' column by the hue choice
+fig.map(sns.kdeplot,'Age',shade= True)
+
+# Set the x max limit by the oldest passenger
+oldest = titanic_df['Age'].max()
+
+#Since we know no one can be negative years old set the x lower limit at 0
+fig.set(xlim=(0,oldest))
+
+#Finally add a legend
+fig.add_legend()
+# We could have done the same thing for the 'person' column to include children:
+
+fig = sns.FacetGrid(titanic_df, hue='Person', aspect=4)
+
+fig.map(sns.kdeplot, 'Age',shade=True)
+
+oldest = titanic_df['Age'].max()
+
+fig.set(xlim= (0,oldest))
+
+fig.add_legend()
+# We could have done the same thing for the 'person' column to include children:
+
+fig = sns.FacetGrid(titanic_df, hue='Person', aspect=4)
+
+fig.map(sns.kdeplot, 'Age',shade=True)
+
+oldest = titanic_df['Age'].max()
+
+fig.set(xlim= (0,oldest))
+
+fig.add_legend()
+# Let's do the same for class by changing the hue argument:
+
+fig = sns.FacetGrid(titanic_df, hue='Pclass', aspect=4)
+
+fig.map(sns.kdeplot, 'Age',shade=True)
+
+oldest = titanic_df['Age'].max()
+
+fig.set(xlim= (0,oldest))
+
+fig.add_legend()
+<seaborn.axisgrid.FacetGrid at 0xe4ae080>
+# Let's get a quick look at our dataset again
+
+titanic_df.head(10)
+# First we'll drop the NaN values and create a new object, deck
+
+deck = titanic_df['Cabin'].dropna()
+# Quick preview of the decks
+deck.head()
+# So let's grab that letter for the deck level with a simple for loop
+# Set empty list
+levels = []
+
+# Loop to grab first letter
+for level in deck:
+    levels.append(level[0])
+
+# Reset DataFrame and use factor plot
+cabin_df = DataFrame(levels)
+
+cabin_df.columns = ['Cabin']
+
+sns.factorplot('Cabin', data=cabin_df, palette='winter_d',kind='count')
+# Redefine cabin_df as everything but where the row was equal to 'T'
+cabin_df = cabin_df[cabin_df.Cabin != 'T']
+#Replot
+sns.factorplot('Cabin', data=cabin_df, palette='spring_d',kind='count')
+<seaborn.axisgrid.FacetGrid at 0xf66d828>
+# Redefine cabin_df as everything but where the row was equal to 'T'
+cabin_df = cabin_df[cabin_df.Cabin != 'T']
+#Replot
+sns.factorplot('Cabin', data=cabin_df, palette='spring_d',kind='count')
+<seaborn.axisgrid.FacetGrid at 0xf66d828>
+titanic_df.head(10) # Let's take another look at our original data
+# Now, make a quick factorplot to check out the results, note the x_order argument, used to deal with NaN values
+
+sns.factorplot('Embarked', data=titanic_df, hue = 'Pclass', x_order=['C','Q','S'],kind='count') 
+<seaborn.axisgrid.FacetGrid at 0xf108630>
+# Let's start by adding a new column to define alone
+
+# add the parent/child column with the sibsp column
+
+titanic_df['Alone'] =  titanic_df.Parch + titanic_df.SibSp
+titanic_df['Alone']
+0       1
+1       1
+2       0
+3       1
+4       0
+5       0
+6       0
+7       4
+8       2
+9       1
+10      2
+11      0
+12      0
+13      6
+14      0
+15      0
+16      5
+17      0
+18      1
+19      0
+20      0
+21      0
+22      0
+23      0
+24      4
+25      6
+26      0
+27      5
+28      0
+29      0
+       ..
+861     1
+862     0
+863    10
+864     0
+865     0
+866     1
+867     0
+868     0
+869     2
+870     0
+871     2
+872     0
+873     0
+874     1
+875     0
+876     0
+877     0
+878     0
+879     1
+880     1
+881     0
+882     0
+883     0
+884     0
+885     5
+886     0
+887     0
+888     3
+889     0
+890     0
+Name: Alone, dtype: int64
+# Look for >0 or ==0 to set alone status
+titanic_df['Alone'].loc[titanic_df['Alone'] >0] = 'With Family'
+titanic_df['Alone'].loc[titanic_df['Alone'] == 0] = 'Alone'
+
+# Check to make sure it worked
+
+titanic_df.head()
+titanic_df['Alone']
+0      With Family
+1      With Family
+2            Alone
+3      With Family
+4            Alone
+5            Alone
+6            Alone
+7      With Family
+8      With Family
+9      With Family
+10     With Family
+11           Alone
+12           Alone
+13     With Family
+14           Alone
+15           Alone
+16     With Family
+17           Alone
+18     With Family
+19           Alone
+20           Alone
+21           Alone
+22           Alone
+23           Alone
+24     With Family
+25     With Family
+26           Alone
+27     With Family
+28           Alone
+29           Alone
+          ...     
+861    With Family
+862          Alone
+863    With Family
+864          Alone
+865          Alone
+866    With Family
+867          Alone
+868          Alone
+869    With Family
+870          Alone
+871    With Family
+872          Alone
+873          Alone
+874    With Family
+875          Alone
+876          Alone
+877          Alone
+878          Alone
+879    With Family
+880    With Family
+881          Alone
+882          Alone
+883          Alone
+884          Alone
+885    With Family
+886          Alone
+887          Alone
+888    With Family
+889          Alone
+890          Alone
+Name: Alone, dtype: object
+# Now let's get a simple visualization!
+
+sns.factorplot('Alone', data=titanic_df, palette='Purp
+les', kind='count')
+<seaborn.axisgrid.FacetGrid at 0x10919128>
+# Let's start by creating a new column for legibility purposes through mapping
+titanic_df['Survivor'] = titanic_df.Survived.map({0:'no', 1:'yes'})
+
+# Let's just get a quick overall view of survied vs died. 
+sns.factorplot('Survivor', data=titanic_df, palette='plasma', kind='count')
+<seaborn.axisgrid.FacetGrid at 0x1096e550>
+sns.lmplot('Age','Survived',hue='Person', data=titanic_df, palette='inferno',x_bins=generations)
+<seaborn.axisgrid.FacetGrid at 0x11e4e048>
+titanic_df.head()
+cabin_df.head()
+sns.lmplot('SibSp','Survived',data=titanic_df, hue='Alone',palette='plasma')
+<seaborn.axisgrid.FacetGrid at 0x15ab8da0>
+sns.factorplot('Parch','Survived',data=titanic_df, hue='Person',palette='plasma')
+<seaborn.axisgrid.FacetGrid at 0x14d5d4a8>
+
